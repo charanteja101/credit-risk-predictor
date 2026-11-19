@@ -1,5 +1,7 @@
 # Power BI dashboard
 
+> **Ready-made dashboard images:** `python dashboard/build_dashboard.py` renders the two pages below as PNG files in `dashboard/screenshots/` from `dashboard/powerbi_data/scored_test.csv`, using the same bands, outcome logic and measures as `measures.dax`. They are generated with matplotlib, not exported from Power BI. The steps in this file explain how to build the interactive Power BI version.
+
 A `.pbix` file cannot be generated from code, so this folder gives you the data contract, the DAX and a layout guide. Build the report in about 30 minutes, then save screenshots here.
 
 ## 1. Export your scored test set
