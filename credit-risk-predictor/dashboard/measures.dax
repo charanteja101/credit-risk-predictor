@@ -1,0 +1,67 @@
+// DAX for the Credit Risk dashboard.
+// Load your scored test set as a table named scored_test (columns are listed in dashboard/README.md).
+// Add the calculated columns first (Table tools -> New column), then the measures (Modeling -> New measure).
+
+// ---------- Calculated columns ----------
+
+outcome =
+SWITCH(
+    TRUE(),
+    scored_test[flagged_high_risk] = 1 && scored_test[actual_default] = 1, "True positive",
+    scored_test[flagged_high_risk] = 1 && scored_test[actual_default] = 0, "False positive",
+    scored_test[flagged_high_risk] = 0 && scored_test[actual_default] = 1, "False negative",
+    "True negative"
+)
+
+age_band =
+SWITCH(
+    TRUE(),
+    scored_test[age] < 25, "1. Under 25",
+    scored_test[age] < 35, "2. 25-34",
+    scored_test[age] < 45, "3. 35-44",
+    scored_test[age] < 55, "4. 45-54",
+    scored_test[age] < 65, "5. 55-64",
+    "6. 65+"
+)
+
+utilisation_band =
+SWITCH(
+    TRUE(),
+    scored_test[RevolvingUtilizationOfUnsecuredLines] < 0.1, "1. Under 10%",
+    scored_test[RevolvingUtilizationOfUnsecuredLines] < 0.3, "2. 10-30%",
+    scored_test[RevolvingUtilizationOfUnsecuredLines] < 0.6, "3. 30-60%",
+    scored_test[RevolvingUtilizationOfUnsecuredLines] < 1.0, "4. 60-100%",
+    "5. Over limit"
+)
+
+// Power BI sorts text alphabetically (High, Low, Medium). Create this column, then select the
+// risk_band column -> Column tools -> Sort by column -> risk_band_order.
+// The age_band and utilisation_band labels start with a number so they already sort correctly.
+risk_band_order =
+SWITCH(scored_test[risk_band], "Low", 1, "Medium", 2, "High", 3, 4)
+
+// ---------- Measures ----------
+
+Total Borrowers = COUNTROWS(scored_test)
+
+Actual Defaults = CALCULATE(COUNTROWS(scored_test), scored_test[actual_default] = 1)
+
+Actual Default Rate = DIVIDE([Actual Defaults], [Total Borrowers])
+
+Avg Predicted Default Probability = AVERAGE(scored_test[default_probability])
+
+Flagged High Risk = CALCULATE(COUNTROWS(scored_test), scored_test[flagged_high_risk] = 1)
+
+True Positives = CALCULATE(COUNTROWS(scored_test), scored_test[outcome] = "True positive")
+
+False Positives = CALCULATE(COUNTROWS(scored_test), scored_test[outcome] = "False positive")
+
+False Negatives = CALCULATE(COUNTROWS(scored_test), scored_test[outcome] = "False negative")
+
+Precision = DIVIDE([True Positives], [True Positives] + [False Positives])
+
+Recall = DIVIDE([True Positives], [True Positives] + [False Negatives])
+
+Default Rate in Flagged Group = DIVIDE([True Positives], [Flagged High Risk])
+
+Lift vs Average = DIVIDE([Default Rate in Flagged Group], [Actual Default Rate])
